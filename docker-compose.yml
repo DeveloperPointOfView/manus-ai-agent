@@ -1,0 +1,89 @@
+services:
+  frontend:
+    image: simpleyyt/manus-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - manus-network
+    environment:
+      - BACKEND_URL=http://backend:8000
+
+  backend:
+    image: simpleyyt/manus-backend
+    depends_on:
+      - sandbox
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./docker/entrypoint.sh:/entrypoint.sh:ro
+    entrypoint: ["/entrypoint.sh"]
+    ports:
+      - "8000:8000"
+    networks:
+      - manus-network
+    env_file:
+      - .env
+    environment:
+      # LLM Configuration (REQUIRED)
+      - API_BASE=https://api.openai.com/v1
+      # NOTE: Removed the hard-coded OpenAI API key from compose to avoid
+      # accidental calls to OpenAI when you intend to use another provider.
+      # If you *do* want to use OpenAI, set API_KEY in your local `.env` file.
+      - MODEL_NAME=gpt-4o
+      - TEMPERATURE=0.7
+      - MAX_TOKENS=2000
+
+      # Sandbox Configuration
+      - SANDBOX_IMAGE=simpleyyt/manus-sandbox
+      - SANDBOX_NAME_PREFIX=sandbox
+      - SANDBOX_TTL_MINUTES=30
+      - SANDBOX_NETWORK=manus-network
+
+      # Search Provider
+      - SEARCH_PROVIDER=deepseek  # Options: baidu, google, bing, deepseek
+      # If you use Deepseek as your search provider, set SEARCH_PROVIDER=deepseek
+      # and put your Deepseek API key in the .env file as DEEPSEEK_API_KEY.
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+
+      # Authentication
+      - AUTH_PROVIDER=password  # Options: password, none, local
+      - JWT_SECRET_KEY=your-secret-key-here
+      - JWT_ALGORITHM=HS256
+      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
+
+      - LOG_LEVEL=INFO
+
+  sandbox:
+    image: simpleyyt/manus-sandbox
+    command: /bin/sh -c "exit 0"
+    restart: "no"
+    networks:
+      - manus-network
+
+  mongodb:
+    image: mongo:7.0
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+    networks:
+      - manus-network
+
+  redis:
+    image: redis:7.0
+    restart: unless-stopped
+    networks:
+      - manus-network
+
+volumes:
+  mongodb_data:
+    name: manus-mongodb-data
+
+networks:
+  manus-network:
+    name: manus-network
+    driver: bridge
+

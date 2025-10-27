@@ -43,10 +43,10 @@ services:
       - SANDBOX_NETWORK=manus-network
 
       # Search Provider
-      - SEARCH_PROVIDER=deepseek  # Options: baidu, google, bing, deepseek
-      # If you use Deepseek as your search provider, set SEARCH_PROVIDER=deepseek
-      # and put your Deepseek API key in the .env file as DEEPSEEK_API_KEY.
-      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - SEARCH_PROVIDER=google  # Options: baidu, google, bing
+      # Configure your preferred search provider API key in .env file
+      # For Google: GOOGLE_SEARCH_API_KEY and GOOGLE_CSE_ID
+      # For Bing: BING_SEARCH_API_KEY
 
       # Authentication
       - AUTH_PROVIDER=password  # Options: password, none, local
